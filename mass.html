@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تعليقات العملاء</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: right;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>أضف تعليقك</h1>
+    <form id="commentForm">
+        <label for="name">الاسم:</label>
+        <input type="text" id="name" required>
+        <br>
+        <label for="comment">التعليق:</label>
+        <textarea id="comment" rows="4" required></textarea>
+        <br>
+        <button type="submit">إرسال التعليق</button>
+    </form>
+
+    <h2>التعليقات السابقة</h2>
+    <ul id="commentsList"></ul>
+
+    <script>
+        const GITHUB_TOKEN = "YOUR_GITHUB_TOKEN"; // استبدل هذا بـ Token الخاص بك
+        const REPO_OWNER = "YOUR_GITHUB_USERNAME"; // اسم المستخدم على GitHub
+        const REPO_NAME = "YOUR_REPO_NAME"; // اسم المستودع
+
+        // تحميل التعليقات عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            loadComments();
+        });
+
+        // إضافة تعليق جديد
+        document.getElementById('commentForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const comment = document.getElementById('comment').value;
+
+            if (name && comment) {
+                const newComment = `${name}: ${comment}`;
+                saveComment(newComment);
+                document.getElementById('commentForm').reset();
+            }
+        });
+
+        // حفظ التعليق في GitHub Issues
+        async function saveComment(comment) {
+            const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: "تعليق جديد",
+                    body: comment
+                })
+            });
+
+            if (response.ok) {
+                loadComments();
+            } else {
+                console.error("فشل في إضافة التعليق");
+            }
+        }
+
+        // تحميل التعليقات من GitHub Issues
+        async function loadComments() {
+            const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues`;
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${GITHUB_TOKEN}`
+                }
+            });
+
+            if (response.ok) {
+                const issues = await response.json();
+                const commentsList = document.getElementById('commentsList');
+                commentsList.innerHTML = '';
+
+                issues.forEach(issue => {
+                    const li = document.createElement('li');
+                    li.textContent = issue.body;
+                    commentsList.appendChild(li);
+                });
+            } else {
+                console.error("فشل في تحميل التعليقات");
+            }
+        }
+    </script>
+</body>
+</html>
